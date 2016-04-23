@@ -1,6 +1,6 @@
 {
   "name": "local-router",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A small, hash-based router for the browser",
   "main": "index.js",
   "scripts": {

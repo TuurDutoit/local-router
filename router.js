@@ -38,8 +38,8 @@ export default class Router {
 
   handleEvent(e) {
     if(this.rhashes.test(location.hash)) {
+      let str = "";
       let route;
-      let str;
 
       for(let i = 0, len = this._routes.length; i < len; i++) {
         route = this._routes[i];
