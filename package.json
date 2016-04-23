@@ -1,0 +1,36 @@
+{
+  "name": "local-router",
+  "version": "1.0.0",
+  "description": "A small, hash-based router for the browser",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "babel:es6": "babel router.js -o build/router.es6.js --plugins transform-es2015-modules-commonjs",
+    "babel": "babel router.js -o build/router.js --presets es2015",
+    "browserify:es6": "browserify build/router.es6.js -o router.es6.js",
+    "browserify": "browserify build/router.js -o index.js",
+    "uglify": "uglifyjs index.js -c -m -o index.min.js",
+    "build:es6": "npm run babel:es6 && npm run browserify:es6",
+    "build:old": "npm run babel && npm run browserify && npm run uglify",
+    "build": "npm run build:es6 & npm run build:old"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TuurDutoit/local-router.git"
+  },
+  "keywords": [
+    "local",
+    "router",
+    "hash",
+    "browser",
+    "client",
+    "small",
+    "mini"
+  ],
+  "author": "Tuur Dutoit <me@tuurdutoit.be>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/TuurDutoit/local-router/issues"
+  },
+  "homepage": "https://github.com/TuurDutoit/local-router#readme"
+}
