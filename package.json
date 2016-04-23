@@ -12,6 +12,9 @@
     "uglify": "uglifyjs index.js -c -m -o index.min.js",
     "build:es6": "npm run babel:es6 && npm run browserify:es6",
     "build:old": "npm run babel && npm run browserify && npm run uglify",
+    "build:test:babel": "babel test/test.js -o build/test.js --plugins transform-es2015-modules-commonjs",
+    "build:test:browserify": "browserify build/test.js -o test/bundle.js",
+    "build:test": "npm run build:test:babel & npm run babel:es6 && npm run build:test:browserify",
     "build": "npm run build:es6 & npm run build:old"
   },
   "repository": {
