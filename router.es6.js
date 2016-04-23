@@ -11,9 +11,9 @@ class Router {
     this.defaultRoute = defaultRoute;
     this.routes = routes;
     this._routes = Object.keys(routes);
-    this.rroutes = new RegExp(`^(${ this._routes.join("|") })$`, i);
-    this.rhashes = new RegExp(`^#(${ this._routes.map(this.getHash, this).join("|") })$`, i);
-    this.rcallbacks = new RegExp(`^(${ this._routes.join("|") }|\*)$`);
+    this.rroutes = new RegExp(`^(${ this._routes.join("|") })$`, "i");
+    this.rhashes = new RegExp(`^#(${ this._routes.map(this.getHash, this).join("|") })$`, "i");
+    this.rcallbacks = new RegExp(`^(${ this._routes.join("|") }|\\*)$`);
     this.allClasses = this._routes.map(route => this.prefix + route);
     this.callbacks = { "*": [] };
     this.checks = {};
@@ -30,7 +30,7 @@ class Router {
     // Prep callbacks, checks and classes objects
     this._routes.forEach(route => {
       this.callbacks[route] = [];
-      this.checks[route] = this.getHash(route);
+      this.checks[route] = new RegExp(`^#${ this.getHash(route) }$`, "i");
       this.classes[route] = this.prefix + route;
     });
 
@@ -49,7 +49,7 @@ class Router {
 
       for (let i = 0, len = this._routes.length; i < len; i++) {
         route = this._routes[i];
-        if (location.hash.test(this.checks[route])) {
+        if (this.checks[route].test(location.hash)) {
           if (this.routes[route]) {
             str = decodeURIComponent(location.hash.slice(route.length + 2));
           }
@@ -93,11 +93,15 @@ class Router {
   }
 
   go(route, str) {
-    if (rroutes.test(route)) {
+    if (this.rroutes.test(route)) {
       if (this.routes[route]) {
-        route += "-" + encodeURIComponent(str);
+        route += "-" + (str ? encodeURIComponent(str) : "");
       }
-      location.hash = "#" + route;
+
+      let hash = "#" + route;
+      if (location.hash !== hash) {
+        location.hash = hash;
+      }
     }
 
     return this;

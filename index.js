@@ -30,9 +30,9 @@ var Router = function () {
     this.defaultRoute = defaultRoute;
     this.routes = routes;
     this._routes = Object.keys(routes);
-    this.rroutes = new RegExp("^(" + this._routes.join("|") + ")$", i);
-    this.rhashes = new RegExp("^#(" + this._routes.map(this.getHash, this).join("|") + ")$", i);
-    this.rcallbacks = new RegExp("^(" + this._routes.join("|") + "|*)$");
+    this.rroutes = new RegExp("^(" + this._routes.join("|") + ")$", "i");
+    this.rhashes = new RegExp("^#(" + this._routes.map(this.getHash, this).join("|") + ")$", "i");
+    this.rcallbacks = new RegExp("^(" + this._routes.join("|") + "|\\*)$");
     this.allClasses = this._routes.map(function (route) {
       return _this.prefix + route;
     });
@@ -55,7 +55,7 @@ var Router = function () {
       // Prep callbacks, checks and classes objects
       this._routes.forEach(function (route) {
         _this2.callbacks[route] = [];
-        _this2.checks[route] = _this2.getHash(route);
+        _this2.checks[route] = new RegExp("^#" + _this2.getHash(route) + "$", "i");
         _this2.classes[route] = _this2.prefix + route;
       });
 
@@ -79,9 +79,9 @@ var Router = function () {
           var route = void 0;
           var str = void 0;
 
-          for (var _i = 0, len = _this3._routes.length; _i < len; _i++) {
-            route = _this3._routes[_i];
-            if (location.hash.test(_this3.checks[route])) {
+          for (var i = 0, len = _this3._routes.length; i < len; i++) {
+            route = _this3._routes[i];
+            if (_this3.checks[route].test(location.hash)) {
               if (_this3.routes[route]) {
                 str = decodeURIComponent(location.hash.slice(route.length + 2));
               }
@@ -129,11 +129,15 @@ var Router = function () {
   }, {
     key: "go",
     value: function go(route, str) {
-      if (rroutes.test(route)) {
+      if (this.rroutes.test(route)) {
         if (this.routes[route]) {
-          route += "-" + encodeURIComponent(str);
+          route += "-" + (str ? encodeURIComponent(str) : "");
         }
-        location.hash = "#" + route;
+
+        var hash = "#" + route;
+        if (location.hash !== hash) {
+          location.hash = hash;
+        }
       }
 
       return this;
