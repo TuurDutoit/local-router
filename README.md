@@ -8,8 +8,11 @@ __Note:__ Due to an issue in prettydiff, the minified ES6 version of the code re
 
 
 ## Files
+The source code resides in `router.js`. The build system provides some transformed versions in the `dist` directory. All these files are wrapped in the UMD module format.  
+Here's a detailed overview of the different files:
+
  * [router.js](https://github.com/TuurDutoit/local-router/blob/master/router.js): the source code, entry point for jsnext.
- * [dist/router.es6.js](https://github.com/TuurDutoit/local-router/blob/master/dist/router.es6.js): the source code, transformed to use the UMD module format, instead of ES2015 modules, which no platform supports at the moment.
+ * [dist/router.es6.js](https://github.com/TuurDutoit/local-router/blob/master/dist/router.es6.js): the source code, transformed to use the UMD module format, instead of ES2015 modules.
  * [dist/router.es6.min.js](https://github.com/TuurDutoit/local-router/blob/master/dist/router.es6.min.js): same as `router.es6.js` but minified.
  * [dist/router.es5.js](https://github.com/TuurDutoit/local-router/blob/master/dist/router.js): transformed to ES5 code, using the UMD module format. The entry point for NPM.
  * [dist/router.es5.min.js](https://github.com/TuurDutoit/local-router/blob/master/dist/router.min.js): same as `router.js`, but minified.
@@ -58,7 +61,7 @@ const router = new Router({
 
 This router would accepts routes like: `#input`, `#result-abcdef`, `#result-`, `#result-Tuur_Dutoit`...
 If an invalid route is browsed to (e.g. `#non-existent`, or just `/`), the browser is redirected to `#input`.
-The class names added to the body will be: `page-input` or `page-result`.
+The class names added to the body will be: `page-input` or `page-result`, depending on the current route, of course.
 
 ### Router.on(string route, function callback)
 Adds a callback to the router. When the user browses to `#route` (substituting `route` with the `route` argument, of course), this callback will be called. If the route accepts a data string, it will be passed in the first argument, otherwise the empty string will be passed in.  
