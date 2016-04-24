@@ -1,4 +1,4 @@
-import Router from "../build/router.es6";
+import Router from "../router";
 
 window.router = new Router({
   routes: {input: false, result: true},

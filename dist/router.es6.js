@@ -1,7 +1,7 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory() :
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
-  (factory());
+  (global.Router = factory());
 }(this, function () { 'use strict';
 
   class Router {
@@ -109,21 +109,6 @@
     }
   }
 
-  window.router = new Router({
-    routes: {input: false, result: true},
-    defaultRoute: "input"
-  });
-
-  router.on("*", (route, data) => {
-    console.log(`route: '${route}'. data: '${data}'`);
-  });
-
-  router.on("input", () => {
-    console.log("input");
-  });
-
-  router.on("result", data => {
-    console.log(`result: '${data}'`);
-  });
+  return Router;
 
 }));

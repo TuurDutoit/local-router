@@ -4,12 +4,15 @@ local-router
 A small, hash-based router for the browser.
 
 
+__Note:__ Due to an issue in prettydiff, the minified ES6 version of the code resides in a directory. The file you want to use is `dist/router.es6.min.js/dist/router.es6.js` instead of `dist/router.es6.min.js`. This issue has been fixed in prettydiff, but hasn't been published to NPM yet.
+
 
 ## Files
- * [router.js](https://github.com/TuurDutoit/local-router/blob/master/router.js): the source code
- * [router.es6.js](https://github.com/TuurDutoit/local-router/blob/master/router.es6.js): the source code, transformed to use commonjs (NPM-style) modules, instead of ES2015 modules, which no platform supports at the moment.
- * [index.js](https://github.com/TuurDutoit/local-router/blob/master/index.js): the default entry point for NPM, transformed to ES5 code and commonjs modules.
- * [index.min.js](https://github.com/TuurDutoit/local-router/blob/master/index.min.js): same as `index.js`, but minified.
+ * [router.js](https://github.com/TuurDutoit/local-router/blob/master/router.js): the source code, entry point for jsnext.
+ * [dist/router.es6.js](https://github.com/TuurDutoit/local-router/blob/master/dist/router.es6.js): the source code, transformed to use the UMD module format, instead of ES2015 modules, which no platform supports at the moment.
+ * [dist/router.es6.min.js](https://github.com/TuurDutoit/local-router/blob/master/dist/router.es6.min.js): same as `router.es6.js` but minified.
+ * [dist/router.es5.js](https://github.com/TuurDutoit/local-router/blob/master/dist/router.js): transformed to ES5 code, using the UMD module format. The entry point for NPM.
+ * [dist/router.es5.min.js](https://github.com/TuurDutoit/local-router/blob/master/dist/router.min.js): same as `router.js`, but minified.
 
 
 ## Installation
@@ -19,7 +22,7 @@ You can either download the files from [GitHub](https://github.com/TuurDutoit/lo
 npm install local-router
 ```
 
-Then you can include local-router in your [Browserify](http://browserify.org/) bundle.
+Then you can either include local-router in your [Browserify](http://browserify.org/) or [RequireJS](http://requirejs.org/) bundle, or load it directly in your HTML page, with a `<script>` tag.
 
 
 ## Usage
