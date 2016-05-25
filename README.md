@@ -50,7 +50,7 @@ Here is an example of how to make a new Router:
 
 ```javascript
 const router = new Router({
-  router: {
+  routes: {
     input: false,
     result: true
   },
