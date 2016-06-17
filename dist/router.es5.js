@@ -1,18 +1,22 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-  typeof define === 'function' && define.amd ? define(factory) :
-  (global.Router = factory());
-}(this, function () { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+  typeof define === 'function' && define.amd ? define(['exports'], factory) :
+  (factory((global.Router = global.Router || {})));
+}(this, function (exports) { 'use strict';
 
-  var babelHelpers = {};
+  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+    return typeof obj;
+  } : function (obj) {
+    return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
+  };
 
-  babelHelpers.classCallCheck = function (instance, Constructor) {
+  var classCallCheck = function (instance, Constructor) {
     if (!(instance instanceof Constructor)) {
       throw new TypeError("Cannot call a class as a function");
     }
   };
 
-  babelHelpers.createClass = function () {
+  var createClass = function () {
     function defineProperties(target, props) {
       for (var i = 0; i < props.length; i++) {
         var descriptor = props[i];
@@ -30,67 +34,93 @@
     };
   }();
 
-  babelHelpers.toConsumableArray = function (arr) {
-    if (Array.isArray(arr)) {
-      for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
+  var encode = function encode(data) {
+    return JSON.stringify(data);
+  };
 
-      return arr2;
+  var decode = function decode(str) {
+    return JSON.parse(str);
+  };
+
+  var getElem = function getElem(elem) {
+    if (typeof elem === "string") {
+      return document.getElementById(elem) || document.querySelector(elem);
     } else {
-      return Array.from(arr);
+      return elem;
     }
   };
 
-  babelHelpers;
+  var processRoutes = function processRoutes(routes) {
+    var res = {};
+    Object.keys(routes).forEach(function (name) {
+      var route = routes[name];
+      if (route === true) {
+        res[name] = { encode: encode, decode: decode };
+      } else if ((typeof route === "undefined" ? "undefined" : _typeof(route)) === "object") {
+        res[name] = route;
+        if (!route.encode) {
+          route.encode = encode;
+        }
+        if (!route.decode) {
+          route.decode = decode;
+        }
+      } else {
+        res[name] = false;
+      }
+    });
+
+    return res;
+  };
 
   var Router = function () {
     function Router() {
-      var _this = this;
+      var routes = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-      var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+      var _ref = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
-      var _ref$routes = _ref.routes;
-      var routes = _ref$routes === undefined ? {} : _ref$routes;
-      var defaultRoute = _ref.defaultRoute;
+      var _ref$index = _ref.index;
+      var index = _ref$index === undefined ? "index" : _ref$index;
       var _ref$prefix = _ref.prefix;
-      var prefix = _ref$prefix === undefined ? "mode-" : _ref$prefix;
-      babelHelpers.classCallCheck(this, Router);
+      var prefix = _ref$prefix === undefined ? "page-" : _ref$prefix;
+      var _ref$elem = _ref.elem;
+      var elem = _ref$elem === undefined ? document.body : _ref$elem;
+      var _ref$invalid = _ref.invalid;
+      var invalid = _ref$invalid === undefined ? index : _ref$invalid;
+      classCallCheck(this, Router);
 
-      this.$body = document.body;
+      this.$elem = getElem(elem);
       this.prefix = prefix;
-      this.defaultRoute = defaultRoute;
-      this.routes = routes;
-      this._routes = Object.keys(routes);
-      this.rroutes = new RegExp("^(" + this._routes.join("|") + ")$", "i");
-      this.rhashes = new RegExp("^#(" + this._routes.map(this.getHash, this).join("|") + ")$", "i");
-      this.rcallbacks = new RegExp("^(" + this._routes.join("|") + "|\\*)$");
-      this.allClasses = this._routes.map(function (route) {
-        return _this.prefix + route;
-      });
+      this.index = index;
+      this.invalid = invalid;
+      this.routes = processRoutes(routes);
+      this.names = Object.keys(routes);
       this.callbacks = { "*": [] };
-      this.checks = {};
-      this.classes = {};
-
-      if (!this.defaultRoute && this._routes.length) {
-        this.defaultRoute = this._routes[0];
-      }
+      this.hashes = {};
+      this.current = null;
 
       this.init();
     }
 
-    babelHelpers.createClass(Router, [{
+    createClass(Router, [{
       key: "init",
       value: function init() {
-        var _this2 = this;
+        var _this = this;
 
-        // Prep callbacks, checks and classes objects
-        this._routes.forEach(function (route) {
-          _this2.callbacks[route] = [];
-          _this2.checks[route] = new RegExp("^#" + _this2.getHash(route) + "$", "i");
-          _this2.classes[route] = _this2.prefix + route;
+        this.genChecks();
+        this.names.forEach(function (route) {
+          _this.callbacks[route] = [];
+          _this.hashes[route] = new RegExp("^#" + _this.getHash(route) + "$", "i");
         });
 
         window.addEventListener("hashchange", this);
         window.addEventListener("load", this);
+      }
+    }, {
+      key: "genChecks",
+      value: function genChecks() {
+        this.rnames = new RegExp("^(" + this.names.join("|") + ")$", "i");
+        this.rhashes = new RegExp("^#(" + this.names.map(this.getHash, this).join("|") + ")$", "i");
+        this.rcallbacks = new RegExp("^(" + this.names.join("|") + "|\\*)$");
       }
     }, {
       key: "getHash",
@@ -98,59 +128,91 @@
         return this.routes[route] ? route + "-.*" : route;
       }
     }, {
+      key: "addRoute",
+      value: function addRoute(name) {
+        var route = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+
+        if (!this.rnames.test(name)) {
+          this.routes[name] = route.encode && route.decode ? route : false;
+          this.names.push(name);
+          this.callbacks[name] = [];
+          this.hashes[name] = new RegExp("^#" + this.getHash(route) + "$", "i");
+          this.genChecks();
+        }
+
+        return this;
+      }
+    }, {
+      key: "removeRoute",
+      value: function removeRoute(name) {
+        if (this.rnames.test(name)) {
+          this.routes[name] = undefined;
+          this.names.splice(this.names.indexOf(name), 1);
+          this.callbacks[name] = undefined;
+          this.hashes[name] = undefined;
+          this.genChecks();
+        }
+
+        return this;
+      }
+    }, {
       key: "handleEvent",
-      value: function handleEvent(e) {
-        var _this3 = this;
+      value: function handleEvent() {
+        var _this2 = this;
 
-        if (this.rhashes.test(location.hash)) {
+        var hash = location.hash;
+
+        if (this.rhashes.test(hash)) {
           (function () {
-            var _$body$classList;
+            var name = void 0,
+                data = void 0;
 
-            var str = "";
-            var route = void 0;
-
-            for (var i = 0, len = _this3._routes.length; i < len; i++) {
-              route = _this3._routes[i];
-              if (_this3.checks[route].test(location.hash)) {
-                if (_this3.routes[route]) {
-                  str = decodeURIComponent(location.hash.slice(route.length + 2));
+            for (var i = 0, len = _this2.names.length; i < len; i++) {
+              name = _this2.names[i];
+              if (_this2.hashes[name].test(hash)) {
+                if (_this2.routes[name]) {
+                  var str = decodeURIComponent(hash.slice(name.length + 2));
+                  data = _this2.routes[name].decode(str);
                 }
                 break;
               }
             }
 
-            (_$body$classList = _this3.$body.classList).remove.apply(_$body$classList, babelHelpers.toConsumableArray(_this3.allClasses));
-            _this3.$body.classList.add(_this3.classes[route]);
+            if (_this2.current) {
+              _this2.$elem.classList.remove(_this2.prefix + _this2.current);
+            }
+            _this2.current = name;
+            _this2.$elem.classList.add(_this2.prefix + name);
 
-            _this3.callbacks[route].forEach(function (cb) {
-              cb(str);
+            _this2.callbacks[name].forEach(function (cb) {
+              cb(data, hash, _this2);
             });
 
-            _this3.callbacks["*"].forEach(function (cb) {
-              cb(route, str);
+            _this2.callbacks["*"].forEach(function (cb) {
+              cb(name, data, hash, _this2);
             });
           })();
-        } else {
-          location.hash = "#" + this.defaultRoute;
+        } else if (this.invalid) {
+          location.hash = "#" + this.invalid;
         }
       }
     }, {
       key: "on",
-      value: function on(route, cb) {
-        if (this.rcallbacks.test(route)) {
-          this.callbacks[route].push(cb);
+      value: function on(name, cb) {
+        if (this.rcallbacks.test(name)) {
+          this.callbacks[name].push(cb);
         }
 
         return this;
       }
     }, {
       key: "off",
-      value: function off(route, cb) {
-        if (this.rcallbacks.test(route)) {
-          var index = this.callbacks[route].indexOf(cb);
+      value: function off(name, cb) {
+        if (this.rcallbacks.test(name)) {
+          var index = this.callbacks[name].indexOf(cb);
 
           if (index !== -1) {
-            this.callbacks[route].splice(index, 1);
+            this.callbacks[name].splice(index, 1);
           }
         }
 
@@ -158,13 +220,13 @@
       }
     }, {
       key: "go",
-      value: function go(route, str) {
-        if (this.rroutes.test(route)) {
-          if (this.routes[route]) {
-            route += "-" + (str ? encodeURIComponent(str) : "");
+      value: function go(name, data) {
+        if (this.rnames.test(name)) {
+          if (this.routes[name]) {
+            name += "-" + encodeURIComponent(this.routes[name].encode(data));
           }
 
-          var hash = "#" + route;
+          var hash = "#" + name;
           if (location.hash !== hash) {
             location.hash = hash;
           }
@@ -176,6 +238,12 @@
     return Router;
   }();
 
-  return Router;
+  exports.encode = encode;
+  exports.decode = decode;
+  exports.getElem = getElem;
+  exports.processRoutes = processRoutes;
+  exports['default'] = Router;
+
+  Object.defineProperty(exports, '__esModule', { value: true });
 
 }));

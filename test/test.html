@@ -7,10 +7,23 @@
     <meta name="description" content="test" />
     <meta name="keywords" content="test" />
     <meta name="author" content="Tuur Dutoit <me@tuurdutoit.be>" />
+    <link rel="stylesheet" type="text/css" href="test.css" />
 
     <title>local-router test</title>
   </head>
   <body>
+    <div class="index">
+      <h1>Index</h1>
+      <form class="input-form">
+        <input class="input" type="text" placeholder="Your message" />
+        <input type="submit" value="Send" />
+      </form>
+    </div>
+    <div class="result">
+      <h1>Your message:</h1>
+      <code><pre class="message"></pre></code>
+      <a href="#index">Back</a>
+    </div>
     <script type="text/javascript" src="bundle.js"></script>
   </body>
 </html>

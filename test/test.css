@@ -1,0 +1,18 @@
+.index {
+  display: none;
+}
+
+.page-index .index {
+  display: block;
+}
+
+
+
+
+.result {
+  display: none;
+}
+
+.page-result .result {
+  display: block;
+}

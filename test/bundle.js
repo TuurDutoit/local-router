@@ -4,126 +4,208 @@
   (factory());
 }(this, function () { 'use strict';
 
-  class Router {
-    constructor({routes = {}, defaultRoute, prefix = "mode-"} = {}) {
-      this.$body = document.body;
-      this.prefix = prefix;
-      this.defaultRoute = defaultRoute;
-      this.routes = routes;
-      this._routes = Object.keys(routes);
-      this.rroutes = new RegExp(`^(${this._routes.join("|")})$`, "i");
-      this.rhashes = new RegExp(`^#(${this._routes.map(this.getHash, this).join("|")})$`, "i");
-      this.rcallbacks = new RegExp(`^(${this._routes.join("|")}|\\*)$`);
-      this.allClasses = this._routes.map(route => this.prefix + route);
-      this.callbacks = {"*": []};
-      this.checks = {};
-      this.classes = {};
+  const encode = function(data) {
+    return JSON.stringify(data);
+  }
 
-      if(!this.defaultRoute && this._routes.length) {
-        this.defaultRoute = this._routes[0];
+  const decode = function(str) {
+    return JSON.parse(str);
+  }
+
+  const getElem = function(elem) {
+    if(typeof elem === "string") {
+      return document.getElementById(elem) || document.querySelector(elem);
+    }
+    else {
+      return elem;
+    }
+  }
+
+  const processRoutes = function(routes) {
+    let res = {};
+    Object.keys(routes).forEach(name => {
+      let route = routes[name];
+      if(route === true) {
+        res[name] = {encode, decode};
       }
+      else if(typeof route === "object") {
+        res[name] = route;
+        if(!route.encode) {
+          route.encode = encode;
+        }
+        if(!route.decode) {
+          route.decode = decode;
+        }
+      }
+      else {
+        res[name] = false;
+      }
+    });
+    
+    return res;
+  }
 
+
+
+  class Router {
+    constructor(routes = {}, {index = "index", prefix = "page-", elem = document.body, invalid = index} = {}) {
+      this.$elem = getElem(elem);
+      this.prefix = prefix;
+      this.index = index;
+      this.invalid = invalid;
+      this.routes = processRoutes(routes);
+      this.names = Object.keys(routes);
+      this.callbacks = {"*": []};
+      this.hashes = {};
+      this.current = null;
+      
       this.init();
     }
-
+    
     init() {
-      // Prep callbacks, checks and classes objects
-      this._routes.forEach(route => {
+      this.genChecks();
+      this.names.forEach(route => {
         this.callbacks[route] = [];
-        this.checks[route] = new RegExp(`^#${this.getHash(route)}$`, "i");
-        this.classes[route] = this.prefix + route;
+        this.hashes[route] = new RegExp(`^#${this.getHash(route)}$`, "i");
       });
-
+      
       window.addEventListener("hashchange", this);
       window.addEventListener("load", this);
     }
-
+    
+    genChecks() {
+      this.rnames = new RegExp(`^(${this.names.join("|")})$`, "i");
+      this.rhashes = new RegExp(`^#(${this.names.map(this.getHash, this).join("|")})$`, "i");
+      this.rcallbacks = new RegExp(`^(${this.names.join("|")}|\\*)$`);
+    }
+    
     getHash(route) {
       return this.routes[route] ? route + "-.*" : route;
     }
-
-    handleEvent(e) {
-      if(this.rhashes.test(location.hash)) {
-        let str = "";
-        let route;
-
-        for(let i = 0, len = this._routes.length; i < len; i++) {
-          route = this._routes[i];
-          if(this.checks[route].test(location.hash)) {
-              if(this.routes[route]) {
-                str = decodeURIComponent(location.hash.slice(route.length + 2));
-              }
-              break;
+    
+    addRoute(name, route = false) {
+      if(!this.rnames.test(name)) {
+        this.routes[name] = (route.encode && route.decode) ? route : false;
+        this.names.push(name);
+        this.callbacks[name] = [];
+        this.hashes[name] = new RegExp(`^#${this.getHash(route)}$`, "i");
+        this.genChecks();
+      }
+      
+      return this;
+    }
+    
+    removeRoute(name) {
+      if(this.rnames.test(name)) {
+        this.routes[name] = undefined;
+        this.names.splice(this.names.indexOf(name), 1);
+        this.callbacks[name] = undefined;
+        this.hashes[name] = undefined;
+        this.genChecks();
+      }
+      
+      return this;
+    }
+    
+    handleEvent() {
+      let hash = location.hash;
+      
+      if(this.rhashes.test(hash)) {
+        let name, data;
+        
+        for(let i = 0, len = this.names.length; i < len; i++) {
+          name = this.names[i];
+          if(this.hashes[name].test(hash)) {
+            if(this.routes[name]) {
+              let str = decodeURIComponent( hash.slice(name.length + 2) );
+              data = this.routes[name].decode(str);
+            }
+            break;
           }
         }
-
-        this.$body.classList.remove(...this.allClasses);
-        this.$body.classList.add(this.classes[route]);
-
-        this.callbacks[route].forEach(cb => {
-          cb(str);
+        
+        if(this.current) {
+          this.$elem.classList.remove(this.prefix + this.current);
+        }
+        this.current = name;
+        this.$elem.classList.add(this.prefix + name);
+        
+        this.callbacks[name].forEach(cb => {
+          cb(data, hash, this);
         });
-
+        
         this.callbacks["*"].forEach(cb => {
-          cb(route, str);
+          cb(name, data, hash, this);
         });
       }
-      else {
-        location.hash = "#" + this.defaultRoute;
+      else if(this.invalid) {
+        location.hash = "#" + this.invalid;
       }
     }
-
-    on(route, cb) {
-      if(this.rcallbacks.test(route)) {
-        this.callbacks[route].push(cb);
+    
+    on(name, cb) {
+      if(this.rcallbacks.test(name)) {
+        this.callbacks[name].push(cb);
       }
-
+      
       return this;
     }
-
-    off(route, cb) {
-      if(this.rcallbacks.test(route)) {
-        let index = this.callbacks[route].indexOf(cb);
-
+    
+    off(name, cb) {
+      if(this.rcallbacks.test(name)) {
+        let index = this.callbacks[name].indexOf(cb);
+        
         if(index !== -1) {
-          this.callbacks[route].splice(index, 1);
+          this.callbacks[name].splice(index, 1);
         }
       }
-
+      
       return this;
     }
-
-    go(route, str) {
-      if(this.rroutes.test(route)) {
-        if(this.routes[route]) {
-          route += "-" + (str ? encodeURIComponent(str) : "");
+    
+    go(name, data) {
+      if(this.rnames.test(name)) {
+        if(this.routes[name]) {
+          name += "-" + encodeURIComponent(this.routes[name].encode(data));
         }
-
-        let hash = "#" + route;
+        
+        let hash = "#" + name;
         if(location.hash !== hash) {
           location.hash = hash;
         }
       }
-
+      
       return this;
     }
   }
 
+  const $form = document.querySelector(".input-form");
+  const $input = document.querySelector(".input");
+  const $message = document.querySelector(".message");
+
   window.router = new Router({
-    routes: {input: false, result: true},
-    defaultRoute: "input"
+    index: false,
+    result: true
   });
 
   router.on("*", (route, data) => {
     console.log(`route: '${route}'. data: '${data}'`);
   });
 
-  router.on("input", () => {
-    console.log("input");
+  router.on("index", () => {
+    console.log("index");
+    $input.value = "";
   });
 
-  router.on("result", data => {
-    console.log(`result: '${data}'`);
+  router.on("result", msg => {
+    console.log(`result: '${msg}'`);
+    $message.textContent = msg;
+  });
+
+  $form.addEventListener("submit", e => {
+    e.preventDefault();
+    let msg = $input.value;
+    router.go("result", msg);
   });
 
 }));
