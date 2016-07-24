@@ -1,8 +1,8 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-  typeof define === 'function' && define.amd ? define(['exports'], factory) :
-  (factory((global.Router = global.Router || {})));
-}(this, function (exports) { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+  typeof define === 'function' && define.amd ? define(factory) :
+  (global.Router = factory());
+}(this, function () { 'use strict';
 
   var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
     return typeof obj;
@@ -35,11 +35,21 @@
   }();
 
   var encode = function encode(data) {
-    return JSON.stringify(data);
+    try {
+      return JSON.stringify(data);
+    } catch (e) {
+      console.warn("[local-router] ERROR: failed to stringify JSON data.", e, data);
+      return "";
+    }
   };
 
   var decode = function decode(str) {
-    return JSON.parse(str);
+    try {
+      return JSON.parse(str);
+    } catch (e) {
+      console.warn("[local-router] ERROR: failed to parse JSON data.", e, str);
+      return null;
+    }
   };
 
   var getElem = function getElem(elem) {
@@ -80,16 +90,19 @@
 
       var _ref$index = _ref.index;
       var index = _ref$index === undefined ? "index" : _ref$index;
+      var _ref$invalid = _ref.invalid;
+      var invalid = _ref$invalid === undefined ? index : _ref$invalid;
       var _ref$prefix = _ref.prefix;
       var prefix = _ref$prefix === undefined ? "page-" : _ref$prefix;
       var _ref$elem = _ref.elem;
       var elem = _ref$elem === undefined ? document.body : _ref$elem;
-      var _ref$invalid = _ref.invalid;
-      var invalid = _ref$invalid === undefined ? index : _ref$invalid;
+      var _ref$separator = _ref.separator;
+      var separator = _ref$separator === undefined ? "-" : _ref$separator;
       classCallCheck(this, Router);
 
       this.$elem = getElem(elem);
       this.prefix = prefix;
+      this.separator = separator;
       this.index = index;
       this.invalid = invalid;
       this.routes = processRoutes(routes);
@@ -106,6 +119,7 @@
       value: function init() {
         var _this = this;
 
+        console.log("router");
         this.genChecks();
         this.names.forEach(function (route) {
           _this.callbacks[route] = [];
@@ -125,7 +139,7 @@
     }, {
       key: "getHash",
       value: function getHash(route) {
-        return this.routes[route] ? route + "-.*" : route;
+        return this.routes[route] ? route + this.separator + ".*" : route;
       }
     }, {
       key: "addRoute",
@@ -164,19 +178,16 @@
 
         if (this.rhashes.test(hash)) {
           (function () {
-            var name = void 0,
-                data = void 0;
+            var index = hash.indexOf(_this2.separator);
+            var name = hash.slice(1, index === -1 ? hash.length : index);
+            var hasData = !!_this2.routes[name];
+            var data = void 0;
 
-            for (var i = 0, len = _this2.names.length; i < len; i++) {
-              name = _this2.names[i];
-              if (_this2.hashes[name].test(hash)) {
-                if (_this2.routes[name]) {
-                  var str = decodeURIComponent(hash.slice(name.length + 2));
-                  data = _this2.routes[name].decode(str);
-                }
-                break;
-              }
+            if (hasData) {
+              var dataStr = hash.slice(index + 1);
+              data = _this2.routes[name].decode(dataStr || "");
             }
+            console.log(name);
 
             if (_this2.current) {
               _this2.$elem.classList.remove(_this2.prefix + _this2.current);
@@ -223,7 +234,7 @@
       value: function go(name, data) {
         if (this.rnames.test(name)) {
           if (this.routes[name]) {
-            name += "-" + encodeURIComponent(this.routes[name].encode(data));
+            name += this.separator + encodeURIComponent(this.routes[name].encode(data));
           }
 
           var hash = "#" + name;
@@ -238,12 +249,6 @@
     return Router;
   }();
 
-  exports.encode = encode;
-  exports.decode = decode;
-  exports.getElem = getElem;
-  exports.processRoutes = processRoutes;
-  exports['default'] = Router;
-
-  Object.defineProperty(exports, '__esModule', { value: true });
+  return Router;
 
 }));

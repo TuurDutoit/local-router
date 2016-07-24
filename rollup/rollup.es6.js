@@ -1,5 +1,5 @@
 export default {
-  entry: "router.js",
+  entry: "src/router.js",
   format: "umd",
   moduleName: "Router"
 };

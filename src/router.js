@@ -1,52 +1,12 @@
-export const encode = function(data) {
-  return JSON.stringify(data);
-}
-
-export const decode = function(str) {
-  return JSON.parse(str);
-}
-
-export const getElem = function(elem) {
-  if(typeof elem === "string") {
-    return document.getElementById(elem) || document.querySelector(elem);
-  }
-  else {
-    return elem;
-  }
-}
-
-export const processRoutes = function(routes) {
-  let res = {};
-  Object.keys(routes).forEach(name => {
-    let route = routes[name];
-    if(route === true) {
-      res[name] = {encode, decode};
-    }
-    else if(typeof route === "object") {
-      res[name] = route;
-      if(!route.encode) {
-        route.encode = encode;
-      }
-      if(!route.decode) {
-        route.decode = decode;
-      }
-    }
-    else {
-      res[name] = false;
-    }
-  });
-  
-  return res;
-}
-
+import {encode, decode, getElem, processRoutes} from "./utils.js";
 
 
 export default class Router {
-  constructor(routes = {}, {index = "index", prefix = "page-", elem = document.body, invalid = index} = {}) {
+  constructor(routes = {}, {index = "index", prefix = "page-", elem = document.body, separator = "-"} = {}) {
     this.$elem = getElem(elem);
     this.prefix = prefix;
+    this.separator = separator;
     this.index = index;
-    this.invalid = invalid;
     this.routes = processRoutes(routes);
     this.names = Object.keys(routes);
     this.callbacks = {"*": []};
@@ -57,6 +17,7 @@ export default class Router {
   }
   
   init() {
+    console.log("router");
     this.genChecks();
     this.names.forEach(route => {
       this.callbacks[route] = [];
@@ -74,7 +35,7 @@ export default class Router {
   }
   
   getHash(route) {
-    return this.routes[route] ? route + "-.*" : route;
+    return this.routes[route] ? route + this.separator + ".*" : route;
   }
   
   addRoute(name, route = false) {
@@ -105,18 +66,16 @@ export default class Router {
     let hash = location.hash;
     
     if(this.rhashes.test(hash)) {
-      let name, data;
+      let index = hash.indexOf(this.separator);
+      let name = hash.slice(1, index === -1 ? hash.length : index)
+      let hasData = !!this.routes[name];
+      let data;
       
-      for(let i = 0, len = this.names.length; i < len; i++) {
-        name = this.names[i];
-        if(this.hashes[name].test(hash)) {
-          if(this.routes[name]) {
-            let str = decodeURIComponent( hash.slice(name.length + 2) );
-            data = this.routes[name].decode(str);
-          }
-          break;
-        }
+      if(hasData) {
+        let dataStr = hash.slice(index+1);
+        data = this.routes[name].decode(dataStr || "");
       }
+      console.log(name);
       
       if(this.current) {
         this.$elem.classList.remove(this.prefix + this.current);
@@ -132,8 +91,8 @@ export default class Router {
         cb(name, data, hash, this);
       });
     }
-    else if(this.invalid) {
-      location.hash = "#" + this.invalid;
+    else {
+      location.hash = "#" + this.index;
     }
   }
   
@@ -160,7 +119,7 @@ export default class Router {
   go(name, data) {
     if(this.rnames.test(name)) {
       if(this.routes[name]) {
-        name += "-" + encodeURIComponent(this.routes[name].encode(data));
+        name += this.separator + encodeURIComponent(this.routes[name].encode(data));
       }
       
       let hash = "#" + name;

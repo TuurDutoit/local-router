@@ -1,6 +1,6 @@
 {
   "name": "local-router",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "description": "A small, hash-based router for the browser",
   "main": "dist/router.es5.js",
   "jsnext:main": "router.js",
@@ -9,6 +9,7 @@
     "rollup:es6": "rollup -c rollup/rollup.es6.js -o dist/router.es6.js",
     "rollup:es5": "rollup -c rollup/rollup.es5.js -o dist/router.es5.js",
     "minify:es6": "prettydiff source:'dist/router.es6.js' mode:'minify' readmethod:'file' output:'dist/router.es6.min.js'",
+    "minify:es6:future": "escompress -o dist/router.es6.min.js dist/router.es6.js",
     "minify:es5": "uglifyjs dist/router.es5.js -c -m -o dist/router.es5.min.js",
     "build:es6": "npm run rollup:es6 && npm run minify:es6",
     "build:es5": "npm run rollup:es5 && npm run minify:es5",
@@ -37,13 +38,11 @@
   "homepage": "https://github.com/TuurDutoit/local-router#readme",
   "devDependencies": {
     "babel-preset-es2015-rollup": "^1.1.1",
+    "escompress": "^0.5.0",
     "prettydiff": "^99.0.1",
-    "rollup": "^0.26.0",
-    "rollup-plugin-babel": "^2.4.0",
+    "rollup": "^0.26.7",
+    "rollup-plugin-babel": "^2.5.1",
     "uglifyjs": "^2.4.10"
   },
-  "dependencies": {
-    "rollup": "^0.26.7",
-    "rollup-plugin-babel": "^2.5.1"
-  }
+  "dependencies": {}
 }

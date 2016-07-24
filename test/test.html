@@ -16,14 +16,22 @@
       <h1>Index</h1>
       <form class="input-form">
         <input class="input" type="text" placeholder="Your message" />
-        <input type="submit" value="Send" />
+        <input type="submit" value="Send Message" />
+      </form>
+      <form class="form2">
+        <textarea class="textarea" name="json" placeholder="JSON data here..."></textarea>
+        <input type="submit" value="Send Data" />
       </form>
     </div>
     <div class="result">
       <h1>Your message:</h1>
       <code><pre class="message"></pre></code>
-      <a href="#index">Back</a>
     </div>
+    <div class="obj">
+      <h1>JSON data</h1>
+      <pre><code class="data-output"></code></pre>
+    </div>
+    <a href="#index" class="back">Back</a>
     <script type="text/javascript" src="bundle.js"></script>
   </body>
 </html>

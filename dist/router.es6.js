@@ -1,15 +1,27 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-  typeof define === 'function' && define.amd ? define(['exports'], factory) :
-  (factory((global.Router = global.Router || {})));
-}(this, function (exports) { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+  typeof define === 'function' && define.amd ? define(factory) :
+  (global.Router = factory());
+}(this, function () { 'use strict';
 
   const encode = function(data) {
-    return JSON.stringify(data);
+    try {
+      return JSON.stringify(data);
+    }
+    catch(e) {
+      console.warn("[local-router] ERROR: failed to stringify JSON data.", e, data);
+      return "";
+    }
   }
 
   const decode = function(str) {
-    return JSON.parse(str);
+    try {
+      return JSON.parse(str);
+    }
+    catch(e) {
+      console.warn("[local-router] ERROR: failed to parse JSON data.", e, str);
+      return null;
+    }
   }
 
   const getElem = function(elem) {
@@ -45,12 +57,11 @@
     return res;
   }
 
-
-
   class Router {
-    constructor(routes = {}, {index = "index", prefix = "page-", elem = document.body, invalid = index} = {}) {
+    constructor(routes = {}, {index = "index", invalid = index, prefix = "page-", elem = document.body, separator = "-"} = {}) {
       this.$elem = getElem(elem);
       this.prefix = prefix;
+      this.separator = separator;
       this.index = index;
       this.invalid = invalid;
       this.routes = processRoutes(routes);
@@ -63,6 +74,7 @@
     }
     
     init() {
+      console.log("router");
       this.genChecks();
       this.names.forEach(route => {
         this.callbacks[route] = [];
@@ -80,7 +92,7 @@
     }
     
     getHash(route) {
-      return this.routes[route] ? route + "-.*" : route;
+      return this.routes[route] ? route + this.separator + ".*" : route;
     }
     
     addRoute(name, route = false) {
@@ -111,18 +123,16 @@
       let hash = location.hash;
       
       if(this.rhashes.test(hash)) {
-        let name, data;
+        let index = hash.indexOf(this.separator);
+        let name = hash.slice(1, index === -1 ? hash.length : index)
+        let hasData = !!this.routes[name];
+        let data;
         
-        for(let i = 0, len = this.names.length; i < len; i++) {
-          name = this.names[i];
-          if(this.hashes[name].test(hash)) {
-            if(this.routes[name]) {
-              let str = decodeURIComponent( hash.slice(name.length + 2) );
-              data = this.routes[name].decode(str);
-            }
-            break;
-          }
+        if(hasData) {
+          let dataStr = hash.slice(index+1);
+          data = this.routes[name].decode(dataStr || "");
         }
+        console.log(name);
         
         if(this.current) {
           this.$elem.classList.remove(this.prefix + this.current);
@@ -166,7 +176,7 @@
     go(name, data) {
       if(this.rnames.test(name)) {
         if(this.routes[name]) {
-          name += "-" + encodeURIComponent(this.routes[name].encode(data));
+          name += this.separator + encodeURIComponent(this.routes[name].encode(data));
         }
         
         let hash = "#" + name;
@@ -179,12 +189,6 @@
     }
   }
 
-  exports.encode = encode;
-  exports.decode = decode;
-  exports.getElem = getElem;
-  exports.processRoutes = processRoutes;
-  exports['default'] = Router;
-
-  Object.defineProperty(exports, '__esModule', { value: true });
+  return Router;
 
 }));
